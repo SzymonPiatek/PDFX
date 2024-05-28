@@ -14,6 +14,11 @@ class PDF:
     def __str__(self):
         return self.name
 
+    def __eq__(self, other):
+        if isinstance(other, PDF):
+            return self.path == other.path
+        return False
+
     def show_info(self):
         return f'''
         Name: {self.name}\n
