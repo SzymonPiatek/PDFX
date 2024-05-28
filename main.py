@@ -39,7 +39,7 @@ class Window(tk.Tk):
         self.config(menu=menubar)
 
     def create_pdf_menubar(self):
-        self.pdf_menubar_frame = tk.Frame(self, bd=1, relief=tk.SUNKEN)
+        self.pdf_menubar_frame = tk.Frame(self, bd=1, relief=tk.SUNKEN, pady=4)
         self.pdf_menubar_frame.pack(side=tk.TOP, fill=tk.X)
 
         self.create_none_pdf_label()
@@ -66,9 +66,9 @@ class Window(tk.Tk):
         for file in self.pdf_files:
             if file.name not in self.pdf_buttons:
                 frame = tk.Frame(self.pdf_menubar_frame)
-                frame.pack(side=tk.LEFT)
+                frame.pack(side=tk.LEFT, padx=2)
 
-                button = tk.Button(frame, text=file.name)
+                button = tk.Button(frame, text=file.name, command=lambda: print(file.name))
                 button.pack(side=tk.LEFT)
 
                 close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file))
