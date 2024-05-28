@@ -65,9 +65,24 @@ class Window(tk.Tk):
             self.none_pdf_label.pack_forget()
         for file in self.pdf_files:
             if file.name not in self.pdf_buttons:
-                button = tk.Button(self.pdf_menubar_frame, text=file.name)
+                frame = tk.Frame(self.pdf_menubar_frame)
+                frame.pack(side=tk.LEFT)
+
+                button = tk.Button(frame, text=file.name)
                 button.pack(side=tk.LEFT)
-                self.pdf_buttons[file.name] = button
+
+                close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file))
+                close_button.pack(side=tk.LEFT)
+
+                self.pdf_buttons[file.name] = frame
+
+    def remove_pdf_file(self, file):
+        self.pdf_files.remove(file)
+        self.pdf_buttons[file.name].destroy()
+        del self.pdf_buttons[file.name]
+
+        if not self.pdf_files:
+            self.create_none_pdf_label()
 
     def test(self):
         print("test")
