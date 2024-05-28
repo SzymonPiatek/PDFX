@@ -21,7 +21,11 @@ class Window(tk.Tk):
                 self.state("zoomed")
                 self.attributes("-fullscreen", False)
 
+        self.pdf_files = []
+        self.pdf_buttons = {}
+
         self.create_menubar()
+        self.create_pdf_menubar()
 
     def create_menubar(self):
         menubar = tk.Menu(self)
@@ -34,12 +38,36 @@ class Window(tk.Tk):
 
         self.config(menu=menubar)
 
+    def create_pdf_menubar(self):
+        self.pdf_menubar_frame = tk.Frame(self, bd=1, relief=tk.SUNKEN)
+        self.pdf_menubar_frame.pack(side=tk.TOP, fill=tk.X)
+
+        self.create_none_pdf_label()
+
+    def create_none_pdf_label(self):
+        self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
+                                       text="Brak wybranych plików")
+        self.none_pdf_label.pack(side=tk.LEFT)
+
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
 
         if ask_pdf_file:
             pdf_file = PDF(ask_pdf_file)
-            print(pdf_file.show_info())
+            if pdf_file not in self.pdf_files:
+                self.pdf_files.append(pdf_file)
+                self.update_pdf_menubar()
+            else:
+                messagebox.showinfo("Informacja", "Ten plik PDF jest już na liście.")
+
+    def update_pdf_menubar(self):
+        if self.pdf_files:
+            self.none_pdf_label.pack_forget()
+        for file in self.pdf_files:
+            if file.name not in self.pdf_buttons:
+                button = tk.Button(self.pdf_menubar_frame, text=file.name)
+                button.pack(side=tk.LEFT)
+                self.pdf_buttons[file.name] = button
 
     def test(self):
         print("test")
