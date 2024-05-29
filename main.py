@@ -2,6 +2,7 @@ import shutil
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from PIL import Image, ImageTk
 from configure import configuration
 from pdf import PDF
 
@@ -26,11 +27,12 @@ class Window(tk.Tk):
         self.pdf_files = []
         self.pdf_buttons = {}
         self.current_pdf = None
-        self.current_pdf_page = 0
+        self.image_id = None
 
         os.makedirs("images", exist_ok=True)
         self.create_menubar()
         self.create_pdf_menubar()
+        self.create_pdf_canvas()
 
     def create_menubar(self):
         menubar = tk.Menu(self)
@@ -54,19 +56,35 @@ class Window(tk.Tk):
                                        text="Brak wybranych plików")
         self.none_pdf_label.pack(side=tk.LEFT)
 
+    def create_pdf_canvas(self):
+        self.pdf_canvas = tk.Canvas(self)
+        self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
+        self.pdf_canvas_image = None
+
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
 
         if ask_pdf_file:
             pdf_file = PDF(ask_pdf_file)
             self.current_pdf = pdf_file
+            self.display_pdf()
             if pdf_file not in self.pdf_files:
                 self.pdf_files.append(pdf_file)
                 self.update_pdf_menubar()
-                pdf_file.current_page = 0
-                self.current_pdf_page = 0
             else:
                 messagebox.showinfo("Informacja", "Ten plik PDF jest już na liście.")
+
+    def display_pdf(self):
+        if self.current_pdf:
+            image_path = self.current_pdf.image_paths[self.current_pdf.current_page]
+            img = Image.open(image_path)
+            img = img.resize((self.winfo_width(), self.winfo_height()))
+            self.pdf_canvas_image = ImageTk.PhotoImage(img)
+
+            if self.image_id:
+                self.pdf_canvas.delete(self.image_id)
+
+            self.image_id = self.pdf_canvas.create_image(0, 0, anchor=tk.NW, image=self.pdf_canvas_image)
 
     def update_pdf_menubar(self):
         if self.pdf_files:
@@ -76,13 +94,17 @@ class Window(tk.Tk):
                 frame = tk.Frame(self.pdf_menubar_frame)
                 frame.pack(side=tk.LEFT, padx=2)
 
-                button = tk.Button(frame, text=file.name, command=lambda: print(file.name))
+                button = tk.Button(frame, text=file.name, command=lambda file=file: self.switch_pdf(file))
                 button.pack(side=tk.LEFT)
 
                 close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file))
                 close_button.pack(side=tk.LEFT)
 
                 self.pdf_buttons[file.name] = frame
+
+    def switch_pdf(self, pdf_file):
+        self.current_pdf = pdf_file
+        self.display_pdf()
 
     def remove_pdf_file(self, file):
         self.pdf_files.remove(file)
