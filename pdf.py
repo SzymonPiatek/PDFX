@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 class PDF:
     def __init__(self, file):
         self.path = file
-        self.name = os.path.basename(self.path) if self.path else ""
+        self.name = os.path.basename(self.path)[:-4]
         self.pages = 0
         self.current_page = 0
         self.size = 0
@@ -27,6 +27,7 @@ class PDF:
     def show_info(self):
         return f'''
         Name: {self.name}\n
+        Type: 'PDF'\n
         Path: {self.path}\n
         Pages: {self.pages}\n
         Size: {self.size} Mb\n
@@ -41,7 +42,7 @@ class PDF:
 
     def convert_pdf_to_images(self):
         pdf = ironpdf.PdfDocument.FromFile(self.path)
-        folder_path = "images"
+        folder_path = f"images/{self.name}"
         pdf.RasterizeToImageFiles(os.path.join(folder_path, "*.png"))
         image_paths = []
 
