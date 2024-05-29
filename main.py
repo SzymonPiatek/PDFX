@@ -33,7 +33,8 @@ class Window(tk.Tk):
         self.create_menubar()
         self.create_pdf_menubar()
         self.create_pdf_canvas()
-        self.create_pdf_info_bar()
+        self.create_pdf_info_frame()
+        self.create_pdf_merge_frame()
         self.create_pdf_functions_bar()
 
     def create_temp_folder(self):
@@ -84,15 +85,15 @@ class Window(tk.Tk):
 
         self.create_none_pdf_label()
 
-    def create_pdf_info_bar(self):
-        self.pdf_info_frame = tk.Frame(self.right_frame)
-        self.pdf_info_frame.pack(side=tk.TOP, fill=tk.Y)
+    def create_pdf_info_frame(self):
+        self.pdf_info_frame = tk.Frame(self.right_frame, padx=4, pady=4)
+        self.pdf_info_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
         self.pdf_info_label = tk.Label(self.pdf_info_frame, text="Właściwości")
-        self.pdf_info_label.pack(side=tk.TOP, fill=tk.X)
+        self.pdf_info_label.pack(side=tk.TOP, fill=tk.BOTH)
 
         self.pdf_info_table = ttk.Treeview(self.pdf_info_frame, columns=("Właściwość", "Wartość"), show="headings", height=5)
-        self.pdf_info_table.pack(side=tk.TOP)
+        self.pdf_info_table.pack(side=tk.TOP, fill=tk.BOTH)
 
         self.pdf_info_table.heading("Właściwość", text="Właściwość")
         self.pdf_info_table.heading("Wartość", text="Wartość")
@@ -101,6 +102,21 @@ class Window(tk.Tk):
         self.pdf_info_table.column("Wartość", width=250)
 
         self.update_pdf_info()
+
+    def create_pdf_merge_frame(self):
+        self.pdf_merge_frame = tk.Frame(self.right_frame, padx=4, pady=4)
+        self.pdf_merge_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.pdf_merge_label = tk.Label(self.pdf_merge_frame, text="Scal pliki")
+        self.pdf_merge_label.pack(side=tk.TOP)
+
+        self.pdf_merge_list = tk.Listbox(master=self.pdf_merge_frame,
+                                         selectmode=tk.SINGLE,
+                                         exportselection=False,
+                                         relief=tk.SOLID,
+                                         height=10,
+                                         takefocus=True)
+        self.pdf_merge_list.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def create_none_pdf_label(self):
         self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
