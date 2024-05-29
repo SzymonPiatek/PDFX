@@ -29,7 +29,7 @@ class PDF:
     def show_info(self):
         return f'''
         Name: {self.name}\n
-        Type: 'PDF'\n
+        Type: PDF\n
         Path: {self.path}\n
         Pages: {self.pages}\n
         Size: {self.size} Mb\n

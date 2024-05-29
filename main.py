@@ -28,10 +28,28 @@ class Window(tk.Tk):
         self.image_id = None
 
         self.create_temp_folder()
+
+        self.create_layout()
+
         self.create_menubar()
         self.create_pdf_menubar()
         self.create_pdf_canvas()
+        self.create_pdf_info_bar()
         self.create_pdf_functions_bar()
+
+    def create_layout(self):
+        self.top_frame = tk.Frame(self)
+        self.top_frame.pack(side=tk.TOP, fill=tk.X)
+
+        self.bottom_frame = tk.Frame(self)
+        self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.left_frame = tk.Frame(self)
+        self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.right_frame = tk.Frame(self, width=300)
+        self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        self.right_frame.pack_propagate(False)
 
     def create_temp_folder(self):
         if os.path.exists("images"):
@@ -39,7 +57,7 @@ class Window(tk.Tk):
         os.makedirs("images")
 
     def create_menubar(self):
-        menubar = tk.Menu(self)
+        menubar = tk.Menu(self.top_frame)
 
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Otwórz", command=self.load_pdf_file)
@@ -49,7 +67,7 @@ class Window(tk.Tk):
         self.config(menu=menubar)
 
     def create_pdf_menubar(self):
-        self.pdf_menubar_container = tk.Frame(self)
+        self.pdf_menubar_container = tk.Frame(self.top_frame)
         self.pdf_menubar_container.pack(side=tk.TOP, fill=tk.X)
 
         self.pdf_menubar_canvas = tk.Canvas(self.pdf_menubar_container, bd=0, highlightthickness=0)
@@ -67,11 +85,15 @@ class Window(tk.Tk):
 
         self.create_none_pdf_label()
 
-    def update_pdf_menubar_scrollregion(self, event):
-        self.pdf_menubar_canvas.configure(scrollregion=self.pdf_menubar_canvas.bbox("all"))
-        self.pdf_menubar_canvas.update_idletasks()
-        canvas_height = self.pdf_menubar_frame.winfo_height()
-        self.pdf_menubar_canvas.configure(height=canvas_height)
+    def create_pdf_info_bar(self):
+        self.pdf_info_frame = tk.Frame(self.right_frame)
+        self.pdf_info_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+
+        self.pdf_info_label = tk.Label(self.pdf_info_frame, text="Właściwości")
+        self.pdf_info_text = tk.Label(self.pdf_info_frame, text="")
+
+        self.pdf_info_label.pack(side=tk.TOP, fill=tk.X)
+        self.pdf_info_text.pack(side=tk.TOP, fill=tk.BOTH)
 
     def create_none_pdf_label(self):
         self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
@@ -82,12 +104,12 @@ class Window(tk.Tk):
             self.update_pdf_page_button()
 
     def create_pdf_canvas(self):
-        self.pdf_canvas = tk.Canvas(self, background="#bdbdbd")
+        self.pdf_canvas = tk.Canvas(self.left_frame, background="#bdbdbd")
         self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
         self.pdf_canvas_image = None
 
     def create_pdf_functions_bar(self):
-        self.pdf_functions_frame = tk.Frame(self)
+        self.pdf_functions_frame = tk.Frame(self.bottom_frame)
         self.pdf_functions_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.pdf_change_page_frame = tk.Frame(self.pdf_functions_frame)
@@ -107,6 +129,12 @@ class Window(tk.Tk):
         self.previous_page_button.pack(side=tk.LEFT)
         self.next_page_button.pack(side=tk.RIGHT)
         self.page_info_label.pack(side=tk.RIGHT)
+
+    def update_pdf_menubar_scrollregion(self, event):
+        self.pdf_menubar_canvas.configure(scrollregion=self.pdf_menubar_canvas.bbox("all"))
+        self.pdf_menubar_canvas.update_idletasks()
+        canvas_height = self.pdf_menubar_frame.winfo_height()
+        self.pdf_menubar_canvas.configure(height=canvas_height)
 
     def update_pdf_page_button(self):
         if self.current_pdf:
@@ -131,6 +159,12 @@ class Window(tk.Tk):
 
         self.display_pdf()
 
+    def update_pdf_info(self):
+        if self.current_pdf:
+            self.pdf_info_text.configure(text=self.current_pdf.show_info())
+        else:
+            self.pdf_info_text.configure(text="")
+
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
 
@@ -139,6 +173,7 @@ class Window(tk.Tk):
             self.current_pdf = pdf_file
             self.display_pdf()
             self.update_pdf_page_button()
+            self.update_pdf_info()
             if pdf_file not in self.pdf_files:
                 self.pdf_files.append(pdf_file)
                 self.update_pdf_menubar()
@@ -194,6 +229,7 @@ class Window(tk.Tk):
         self.current_pdf = pdf_file
         self.display_pdf()
         self.update_pdf_page_button()
+        self.update_pdf_info()
 
     def remove_pdf_file(self, file):
         file.remove_files()
@@ -206,15 +242,13 @@ class Window(tk.Tk):
 
         if not self.pdf_files:
             self.create_none_pdf_label()
+            self.update_pdf_info()
         else:
             self.switch_pdf(self.pdf_files[0])
 
     def on_closing(self):
         shutil.rmtree("images")
         self.destroy()
-
-    def test(self):
-        print("test")
 
 
 if __name__ == "__main__":
