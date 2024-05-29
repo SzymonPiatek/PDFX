@@ -12,6 +12,7 @@ class PDF:
         self.pages = 0
         self.current_page = 0
         self.size = 0
+        self.folder_path = f"images/{self.name}"
         self.image_paths = self.convert_pdf_to_images()
 
         self.check_pdf_info()
@@ -42,11 +43,13 @@ class PDF:
 
     def convert_pdf_to_images(self):
         pdf = ironpdf.PdfDocument.FromFile(self.path)
-        folder_path = f"images/{self.name}"
-        pdf.RasterizeToImageFiles(os.path.join(folder_path, "*.png"))
+        pdf.RasterizeToImageFiles(os.path.join(self.folder_path, "*.png"))
         image_paths = []
 
-        for filename in os.listdir(folder_path):
+        for filename in os.listdir(self.folder_path):
             if filename.lower().endswith((".png", ".jpg", ".jpeg")):
-                image_paths.append(os.path.join(folder_path, filename))
+                image_paths.append(os.path.join(self.folder_path, filename))
         return image_paths
+
+    def remove_files(self):
+        shutil.rmtree(self.folder_path)

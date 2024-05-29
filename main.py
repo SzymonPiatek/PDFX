@@ -29,14 +29,16 @@ class Window(tk.Tk):
         self.current_pdf = None
         self.image_id = None
 
-        os.makedirs("images", exist_ok=True)
+        self.create_temp_folder()
         self.create_menubar()
         self.create_pdf_menubar()
         self.create_pdf_canvas()
         self.create_pdf_functions_bar()
 
     def create_temp_folder(self):
-        pass
+        if os.path.exists("images"):
+            shutil.rmtree("images")
+        os.makedirs("images")
 
     def create_menubar(self):
         menubar = tk.Menu(self)
@@ -60,6 +62,9 @@ class Window(tk.Tk):
                                        text="Brak wybranych plików")
         self.none_pdf_label.pack(side=tk.LEFT)
 
+        if hasattr(self, "previous_page_button"):
+            self.update_pdf_page_button()
+
     def create_pdf_canvas(self):
         self.pdf_canvas = tk.Canvas(self, background="#bdbdbd")
         self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
@@ -82,15 +87,19 @@ class Window(tk.Tk):
         self.next_page_button.pack(side=tk.RIGHT)
 
     def update_pdf_page_button(self):
-        if self.current_pdf.current_page == 0:
-            self.previous_page_button.configure(state="disabled")
-        else:
-            self.previous_page_button.configure(state="normal")
+        if self.current_pdf:
+            if self.current_pdf.current_page == 0:
+                self.previous_page_button.configure(state="disabled")
+            else:
+                self.previous_page_button.configure(state="normal")
 
-        if self.current_pdf.current_page == self.current_pdf.pages - 1:
-            self.next_page_button.configure(state="disabled")
+            if self.current_pdf.current_page == self.current_pdf.pages - 1:
+                self.next_page_button.configure(state="disabled")
+            else:
+                self.next_page_button.configure(state="normal")
         else:
-            self.next_page_button.configure(state="normal")
+            self.previous_page_button.configure(state="disabled")
+            self.next_page_button.configure(state="disabled")
 
     def change_pdf_page(self, value):
         if self.current_pdf:
@@ -171,8 +180,10 @@ class Window(tk.Tk):
     def switch_pdf(self, pdf_file):
         self.current_pdf = pdf_file
         self.display_pdf()
+        self.update_pdf_page_button()
 
     def remove_pdf_file(self, file):
+        file.remove_files()
         self.pdf_files.remove(file)
         self.pdf_buttons[file.name].destroy()
         del self.pdf_buttons[file.name]
@@ -182,6 +193,8 @@ class Window(tk.Tk):
 
         if not self.pdf_files:
             self.create_none_pdf_label()
+        else:
+            self.switch_pdf(self.pdf_files[0])
 
     def on_closing(self):
         shutil.rmtree("images")
