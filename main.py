@@ -170,49 +170,17 @@ class Window(tk.Tk):
         for row in self.pdf_info_table.get_children():
             self.pdf_info_table.delete(row)
 
-        pdf_name = self.wrap_text(self.current_pdf.name) if self.current_pdf else ""
-        pdf_type = self.wrap_text(self.current_pdf.type) if self.current_pdf else ""
-        pdf_path = self.wrap_text(self.current_pdf.path) if self.current_pdf else ""
-        pdf_pages = self.wrap_text(self.current_pdf.pages) if self.current_pdf else ""
-        pdf_size = self.wrap_text(self.current_pdf.size) if self.current_pdf else ""
+        pdf_name = self.current_pdf.name if self.current_pdf else ""
+        pdf_type = self.current_pdf.type if self.current_pdf else ""
+        pdf_path = self.current_pdf.path if self.current_pdf else ""
+        pdf_pages = self.current_pdf.pages if self.current_pdf else ""
+        pdf_size = f"{self.current_pdf.size} Mb" if self.current_pdf else ""
 
         self.pdf_info_table.insert("", "end", values=("Nazwa", pdf_name))
         self.pdf_info_table.insert("", "end", values=("Typ", pdf_type))
         self.pdf_info_table.insert("", "end", values=("Ścieżka", pdf_path))
         self.pdf_info_table.insert("", "end", values=("Ilość stron", pdf_pages))
         self.pdf_info_table.insert("", "end", values=("Rozmiar pliku", pdf_size))
-
-    def wrap_text(self, text):
-        lines = []
-        text = str(text)
-
-        if len(text) > 35:
-            output = text
-            # words = text.split()
-            # output = ""
-            #
-            # line = []
-            # i = 0
-            # max_i = len(words)
-            # while i != max_i:
-            #     if len(line) < 35:
-            #         line.append(words[i])
-            #         i += 1
-            #     elif len(line) >= 35:
-            #         if len(line) > 35:
-            #             line.remove(words[i])
-            #         lines.append(line)
-            #         line = []
-            #
-            # for line in lines:
-            #     if line == lines[-1]:
-            #         output += line
-            #     else:
-            #         output += line + "\n"
-        else:
-            output = text
-
-        return output
 
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
