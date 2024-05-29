@@ -36,6 +36,11 @@ class Window(tk.Tk):
         self.create_pdf_info_bar()
         self.create_pdf_functions_bar()
 
+    def create_temp_folder(self):
+        if os.path.exists("images"):
+            shutil.rmtree("images")
+        os.makedirs("images")
+
     def create_layout(self):
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X)
@@ -49,11 +54,6 @@ class Window(tk.Tk):
         self.right_frame = tk.Frame(self, width=350)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.right_frame.pack_propagate(False)
-
-    def create_temp_folder(self):
-        if os.path.exists("images"):
-            shutil.rmtree("images")
-        os.makedirs("images")
 
     def create_menubar(self):
         menubar = tk.Menu(self.top_frame)
@@ -86,12 +86,12 @@ class Window(tk.Tk):
 
     def create_pdf_info_bar(self):
         self.pdf_info_frame = tk.Frame(self.right_frame)
-        self.pdf_info_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        self.pdf_info_frame.pack(side=tk.TOP, fill=tk.Y)
 
         self.pdf_info_label = tk.Label(self.pdf_info_frame, text="Właściwości")
         self.pdf_info_label.pack(side=tk.TOP, fill=tk.X)
 
-        self.pdf_info_table = ttk.Treeview(self.pdf_info_frame, columns=("Właściwość", "Wartość"), show="headings")
+        self.pdf_info_table = ttk.Treeview(self.pdf_info_frame, columns=("Właściwość", "Wartość"), show="headings", height=5)
         self.pdf_info_table.pack(side=tk.TOP)
 
         self.pdf_info_table.heading("Właściwość", text="Właściwość")
