@@ -30,7 +30,6 @@ class Window(tk.Tk):
         self.create_temp_folder()
 
         self.create_layout()
-
         self.create_menubar()
         self.create_pdf_menubar()
         self.create_pdf_canvas()

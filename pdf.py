@@ -1,8 +1,13 @@
 from PyPDF2 import PdfReader
 import os
 import shutil
-import ironpdf
-from PIL import Image, ImageTk
+import sys
+import contextlib
+
+
+with open(os.devnull, 'w') as devnull:
+    with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+        import ironpdf
 
 
 class PDF:
