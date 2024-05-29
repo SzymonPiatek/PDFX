@@ -33,6 +33,10 @@ class Window(tk.Tk):
         self.create_menubar()
         self.create_pdf_menubar()
         self.create_pdf_canvas()
+        self.create_pdf_functions_bar()
+
+    def create_temp_folder(self):
+        pass
 
     def create_menubar(self):
         menubar = tk.Menu(self)
@@ -57,9 +61,53 @@ class Window(tk.Tk):
         self.none_pdf_label.pack(side=tk.LEFT)
 
     def create_pdf_canvas(self):
-        self.pdf_canvas = tk.Canvas(self)
+        self.pdf_canvas = tk.Canvas(self, background="#bdbdbd")
         self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
         self.pdf_canvas_image = None
+
+    def create_pdf_functions_bar(self):
+        self.pdf_change_page_frame = tk.Frame(self)
+        self.pdf_change_page_frame.pack(side=tk.BOTTOM)
+
+        self.previous_page_button = tk.Button(master=self.pdf_change_page_frame,
+                                              text="Poprzednia",
+                                              command=lambda: self.change_pdf_page(-1),
+                                              state="disabled")
+        self.next_page_button = tk.Button(master=self.pdf_change_page_frame,
+                                          text="Następna",
+                                          command=lambda: self.change_pdf_page(1),
+                                          state="disabled")
+
+        self.previous_page_button.pack(side=tk.LEFT)
+        self.next_page_button.pack(side=tk.RIGHT)
+
+    def update_pdf_page_button(self):
+        if self.current_pdf.current_page == 0:
+            self.previous_page_button.configure(state="disabled")
+        else:
+            self.previous_page_button.configure(state="normal")
+
+        if self.current_pdf.current_page == self.current_pdf.pages - 1:
+            self.next_page_button.configure(state="disabled")
+        else:
+            self.next_page_button.configure(state="normal")
+
+    def change_pdf_page(self, value):
+        if self.current_pdf:
+            if value == -1:
+                if self.current_pdf.current_page == 0:
+                    return
+                else:
+                    self.current_pdf.current_page -= 1
+            else:
+                if self.current_pdf.current_page == self.current_pdf.pages - 1:
+                    return
+                else:
+                    self.current_pdf.current_page += 1
+
+        self.update_pdf_page_button()
+
+        self.display_pdf()
 
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
@@ -68,6 +116,7 @@ class Window(tk.Tk):
             pdf_file = PDF(ask_pdf_file)
             self.current_pdf = pdf_file
             self.display_pdf()
+            self.update_pdf_page_button()
             if pdf_file not in self.pdf_files:
                 self.pdf_files.append(pdf_file)
                 self.update_pdf_menubar()
@@ -78,13 +127,25 @@ class Window(tk.Tk):
         if self.current_pdf:
             image_path = self.current_pdf.image_paths[self.current_pdf.current_page]
             img = Image.open(image_path)
-            img = img.resize((self.winfo_width(), self.winfo_height()))
+
+            padding = 40
+
+            pdf_width, pdf_height = img.size
+            canvas_width = self.pdf_canvas.winfo_width() - padding
+            canvas_height = self.pdf_canvas.winfo_height() - padding
+
+            scale = min(canvas_width / pdf_width, canvas_height / pdf_height)
+            scaled_width = int(pdf_width * scale)
+            scaled_height = int(pdf_height * scale)
+
+            img = img.resize((scaled_width, scaled_height))
             self.pdf_canvas_image = ImageTk.PhotoImage(img)
 
-            if self.image_id:
-                self.pdf_canvas.delete(self.image_id)
+            self.delete_pdf_canvas_image()
 
-            self.image_id = self.pdf_canvas.create_image(0, 0, anchor=tk.NW, image=self.pdf_canvas_image)
+            x_offset = (canvas_width - scaled_width) / 2
+            y_offset = (canvas_height + padding - scaled_height) / 2
+            self.image_id = self.pdf_canvas.create_image(x_offset, y_offset, anchor=tk.NW, image=self.pdf_canvas_image)
 
     def update_pdf_menubar(self):
         if self.pdf_files:
@@ -102,6 +163,11 @@ class Window(tk.Tk):
 
                 self.pdf_buttons[file.name] = frame
 
+    def delete_pdf_canvas_image(self):
+        if self.image_id:
+            self.pdf_canvas.delete(self.image_id)
+            self.image_id = None
+
     def switch_pdf(self, pdf_file):
         self.current_pdf = pdf_file
         self.display_pdf()
@@ -110,6 +176,9 @@ class Window(tk.Tk):
         self.pdf_files.remove(file)
         self.pdf_buttons[file.name].destroy()
         del self.pdf_buttons[file.name]
+        self.current_pdf = None
+
+        self.delete_pdf_canvas_image()
 
         if not self.pdf_files:
             self.create_none_pdf_label()
