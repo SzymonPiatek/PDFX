@@ -71,8 +71,11 @@ class Window(tk.Tk):
         self.pdf_canvas_image = None
 
     def create_pdf_functions_bar(self):
-        self.pdf_change_page_frame = tk.Frame(self)
-        self.pdf_change_page_frame.pack(side=tk.BOTTOM)
+        self.pdf_functions_frame = tk.Frame(self)
+        self.pdf_functions_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.pdf_change_page_frame = tk.Frame(self.pdf_functions_frame)
+        self.pdf_change_page_frame.pack(side=tk.LEFT)
 
         self.previous_page_button = tk.Button(master=self.pdf_change_page_frame,
                                               text="Poprzednia",
@@ -82,9 +85,12 @@ class Window(tk.Tk):
                                           text="Następna",
                                           command=lambda: self.change_pdf_page(1),
                                           state="disabled")
+        self.page_info_label = tk.Label(master=self.pdf_functions_frame,
+                                        text="")
 
         self.previous_page_button.pack(side=tk.LEFT)
         self.next_page_button.pack(side=tk.RIGHT)
+        self.page_info_label.pack(side=tk.RIGHT)
 
     def update_pdf_page_button(self):
         if self.current_pdf:
@@ -97,9 +103,11 @@ class Window(tk.Tk):
                 self.next_page_button.configure(state="disabled")
             else:
                 self.next_page_button.configure(state="normal")
+            self.page_info_label.configure(text=f"Strona {self.current_pdf.current_page + 1} z {self.current_pdf.pages}")
         else:
             self.previous_page_button.configure(state="disabled")
             self.next_page_button.configure(state="disabled")
+            self.page_info_label.configure(text="")
 
     def change_pdf_page(self, value):
         if self.current_pdf:
