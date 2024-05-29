@@ -17,12 +17,10 @@ class Window(tk.Tk):
         if config["test"]:
             self.geometry("800x800+0+0")
         else:
-            if config["fullscreen"]:
-                self.attributes('-fullscreen', True)
-            else:
+            if not config["fullscreen"]:
                 self.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
                 self.state("zoomed")
-                self.attributes("-fullscreen", False)
+            self.attributes("-fullscreen", config["fullscreen"])
 
         self.pdf_files = []
         self.pdf_buttons = {}
@@ -45,7 +43,6 @@ class Window(tk.Tk):
 
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Otwórz", command=self.load_pdf_file)
-        file_menu.add_command(label="Zapisz", command=self.test)
 
         menubar.add_cascade(label="Plik", menu=file_menu)
 
@@ -113,16 +110,13 @@ class Window(tk.Tk):
 
     def update_pdf_page_button(self):
         if self.current_pdf:
-            if self.current_pdf.current_page == 0:
-                self.previous_page_button.configure(state="disabled")
-            else:
-                self.previous_page_button.configure(state="normal")
+            first_page = self.current_pdf.current_page == 0
+            last_page = self.current_pdf.current_page == self.current_pdf.pages - 1
 
-            if self.current_pdf.current_page == self.current_pdf.pages - 1:
-                self.next_page_button.configure(state="disabled")
-            else:
-                self.next_page_button.configure(state="normal")
-            self.page_info_label.configure(text=f"Strona {self.current_pdf.current_page + 1} z {self.current_pdf.pages}")
+            self.previous_page_button.configure(state="disabled" if first_page else "normal")
+            self.next_page_button.configure(state="disabled" if last_page else "normal")
+            self.page_info_label.configure(
+                text=f"Strona {self.current_pdf.current_page + 1} z {self.current_pdf.pages}")
         else:
             self.previous_page_button.configure(state="disabled")
             self.next_page_button.configure(state="disabled")
@@ -130,16 +124,8 @@ class Window(tk.Tk):
 
     def change_pdf_page(self, value):
         if self.current_pdf:
-            if value == -1:
-                if self.current_pdf.current_page == 0:
-                    return
-                else:
-                    self.current_pdf.current_page -= 1
-            else:
-                if self.current_pdf.current_page == self.current_pdf.pages - 1:
-                    return
-                else:
-                    self.current_pdf.current_page += 1
+            self.current_pdf.current_page = max(0,
+                                                min(self.current_pdf.pages - 1, self.current_pdf.current_page + value))
 
         self.update_pdf_page_button()
 
