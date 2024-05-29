@@ -5,8 +5,9 @@ import os
 class PDF:
     def __init__(self, file):
         self.path = file
-        self.name = ""
+        self.name = os.path.basename(self.path) if self.path else ""
         self.pages = 0
+        self.current_page = 0
         self.size = 0
 
         self.check_pdf_info()
@@ -33,4 +34,3 @@ class PDF:
             self.pages = len(pdf_reader.pages)
 
         self.size = round(os.path.getsize(self.path) / (1024 * 1024), 2)
-        self.name = os.path.basename(self.path)

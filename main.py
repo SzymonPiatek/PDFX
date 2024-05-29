@@ -23,6 +23,8 @@ class Window(tk.Tk):
 
         self.pdf_files = []
         self.pdf_buttons = {}
+        self.current_pdf = None
+        self.current_pdf_page = 0
 
         self.create_menubar()
         self.create_pdf_menubar()
@@ -54,9 +56,12 @@ class Window(tk.Tk):
 
         if ask_pdf_file:
             pdf_file = PDF(ask_pdf_file)
+            self.current_pdf = pdf_file
             if pdf_file not in self.pdf_files:
                 self.pdf_files.append(pdf_file)
                 self.update_pdf_menubar()
+                self.pdf_file.current_page = 0
+                self.current_pdf_page = 0
             else:
                 messagebox.showinfo("Informacja", "Ten plik PDF jest już na liście.")
 
