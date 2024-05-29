@@ -1,3 +1,5 @@
+import shutil
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from configure import configuration
@@ -26,6 +28,7 @@ class Window(tk.Tk):
         self.current_pdf = None
         self.current_pdf_page = 0
 
+        os.makedirs("images", exist_ok=True)
         self.create_menubar()
         self.create_pdf_menubar()
 
@@ -60,7 +63,7 @@ class Window(tk.Tk):
             if pdf_file not in self.pdf_files:
                 self.pdf_files.append(pdf_file)
                 self.update_pdf_menubar()
-                self.pdf_file.current_page = 0
+                pdf_file.current_page = 0
                 self.current_pdf_page = 0
             else:
                 messagebox.showinfo("Informacja", "Ten plik PDF jest już na liście.")
@@ -89,10 +92,15 @@ class Window(tk.Tk):
         if not self.pdf_files:
             self.create_none_pdf_label()
 
+    def on_closing(self):
+        shutil.rmtree("images")
+        self.destroy()
+
     def test(self):
         print("test")
 
 
 if __name__ == "__main__":
     app = Window(config=configuration)
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()

@@ -1,5 +1,8 @@
 from PyPDF2 import PdfReader
 import os
+import shutil
+import ironpdf
+from PIL import Image, ImageTk
 
 
 class PDF:
@@ -9,6 +12,7 @@ class PDF:
         self.pages = 0
         self.current_page = 0
         self.size = 0
+        self.image_paths = self.convert_pdf_to_images()
 
         self.check_pdf_info()
 
@@ -34,3 +38,14 @@ class PDF:
             self.pages = len(pdf_reader.pages)
 
         self.size = round(os.path.getsize(self.path) / (1024 * 1024), 2)
+
+    def convert_pdf_to_images(self):
+        pdf = ironpdf.PdfDocument.FromFile(self.path)
+        folder_path = "images"
+        pdf.RasterizeToImageFiles(os.path.join(folder_path, "*.png"))
+        image_paths = []
+
+        for filename in os.listdir(folder_path):
+            if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+                image_paths.append(os.path.join(folder_path, filename))
+        return image_paths
