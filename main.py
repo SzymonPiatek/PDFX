@@ -52,15 +52,34 @@ class Window(tk.Tk):
         self.config(menu=menubar)
 
     def create_pdf_menubar(self):
-        self.pdf_menubar_frame = tk.Frame(self, bd=1, relief=tk.SUNKEN, pady=4)
-        self.pdf_menubar_frame.pack(side=tk.TOP, fill=tk.X)
+        self.pdf_menubar_container = tk.Frame(self)
+        self.pdf_menubar_container.pack(side=tk.TOP, fill=tk.X)
+
+        self.pdf_menubar_canvas = tk.Canvas(self.pdf_menubar_container, bd=0, highlightthickness=0)
+        self.pdf_menubar_frame = tk.Frame(self.pdf_menubar_canvas, bd=1, relief=tk.SUNKEN, pady=4)
+        self.pdf_menubar_scrollbar = tk.Scrollbar(self.pdf_menubar_container, orient=tk.HORIZONTAL,
+                                                  command=self.pdf_menubar_canvas.xview)
+
+        self.pdf_menubar_canvas.configure(xscrollcommand=self.pdf_menubar_scrollbar.set)
+        self.pdf_menubar_canvas.create_window((0, 0), window=self.pdf_menubar_frame, anchor=tk.NW)
+
+        self.pdf_menubar_frame.bind("<Configure>", self.update_pdf_menubar_scrollregion)
+
+        self.pdf_menubar_canvas.pack(side=tk.TOP, fill=tk.X, expand=True)
+        self.pdf_menubar_scrollbar.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.create_none_pdf_label()
+
+    def update_pdf_menubar_scrollregion(self, event):
+        self.pdf_menubar_canvas.configure(scrollregion=self.pdf_menubar_canvas.bbox("all"))
+        self.pdf_menubar_canvas.update_idletasks()
+        canvas_height = self.pdf_menubar_frame.winfo_height()
+        self.pdf_menubar_canvas.configure(height=canvas_height)
 
     def create_none_pdf_label(self):
         self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
                                        text="Brak wybranych plików")
-        self.none_pdf_label.pack(side=tk.LEFT)
+        self.none_pdf_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         if hasattr(self, "previous_page_button"):
             self.update_pdf_page_button()
@@ -166,7 +185,7 @@ class Window(tk.Tk):
 
     def update_pdf_menubar(self):
         if self.pdf_files:
-            self.none_pdf_label.pack_forget()
+            self.none_pdf_label.destroy()
         for file in self.pdf_files:
             if file.name not in self.pdf_buttons:
                 frame = tk.Frame(self.pdf_menubar_frame)
