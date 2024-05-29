@@ -1,7 +1,7 @@
 import shutil
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 from configure import configuration
 from pdf import PDF
@@ -47,7 +47,7 @@ class Window(tk.Tk):
         self.left_frame = tk.Frame(self)
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.right_frame = tk.Frame(self, width=300)
+        self.right_frame = tk.Frame(self, width=350)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.right_frame.pack_propagate(False)
 
@@ -90,10 +90,18 @@ class Window(tk.Tk):
         self.pdf_info_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
         self.pdf_info_label = tk.Label(self.pdf_info_frame, text="Właściwości")
-        self.pdf_info_text = tk.Label(self.pdf_info_frame, text="")
-
         self.pdf_info_label.pack(side=tk.TOP, fill=tk.X)
-        self.pdf_info_text.pack(side=tk.TOP, fill=tk.BOTH)
+
+        self.pdf_info_table = ttk.Treeview(self.pdf_info_frame, columns=("Właściwość", "Wartość"), show="headings")
+        self.pdf_info_table.pack(side=tk.TOP)
+
+        self.pdf_info_table.heading("Właściwość", text="Właściwość")
+        self.pdf_info_table.heading("Wartość", text="Wartość")
+
+        self.pdf_info_table.column("Właściwość", width=80)
+        self.pdf_info_table.column("Wartość", width=250)
+
+        self.update_pdf_info()
 
     def create_none_pdf_label(self):
         self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
@@ -160,10 +168,14 @@ class Window(tk.Tk):
         self.display_pdf()
 
     def update_pdf_info(self):
-        if self.current_pdf:
-            self.pdf_info_text.configure(text=self.current_pdf.show_info())
-        else:
-            self.pdf_info_text.configure(text="")
+        for row in self.pdf_info_table.get_children():
+            self.pdf_info_table.delete(row)
+
+        self.pdf_info_table.insert("", "end", values=("Nazwa", self.current_pdf.name if self.current_pdf else ""))
+        self.pdf_info_table.insert("", "end", values=("Typ", self.current_pdf.type if self.current_pdf else ""))
+        self.pdf_info_table.insert("", "end", values=("Ścieżka", self.current_pdf.path if self.current_pdf else ""))
+        self.pdf_info_table.insert("", "end", values=("Ilość stron", self.current_pdf.pages if self.current_pdf else ""))
+        self.pdf_info_table.insert("", "end", values=("Rozmiar pliku", self.current_pdf.size if self.current_pdf else ""))
 
     def load_pdf_file(self):
         ask_pdf_file = filedialog.askopenfilename(title="Wybierz plik PDF", filetypes=(("Pliki PDF", "*.pdf"),))
@@ -200,7 +212,7 @@ class Window(tk.Tk):
 
             self.delete_pdf_canvas_image()
 
-            x_offset = (canvas_width - scaled_width) / 2
+            x_offset = (canvas_width + padding - scaled_width) / 2
             y_offset = (canvas_height + padding - scaled_height) / 2
             self.image_id = self.pdf_canvas.create_image(x_offset, y_offset, anchor=tk.NW, image=self.pdf_canvas_image)
 
