@@ -3,6 +3,8 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
+from PyPDF2 import PdfFileMerger
+from pypdf import PdfWriter
 from configure import configuration
 from pdf import PDF
 
@@ -28,9 +30,6 @@ class Window(tk.Tk):
         self.pdf_buttons = {}
         self.current_pdf = None
         self.image_id = None
-        self.drag_data = {"x": 0,
-                          "y": 0,
-                          "selected_index": None}
 
         self.create_temp_folder()
         self.create_layout()
@@ -43,16 +42,16 @@ class Window(tk.Tk):
     def create_layout(self):
         self.configure(bg=self.cnfg["background_color"])
 
-        self.top_frame = tk.Frame(self)
+        self.top_frame = tk.Frame(master=self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X)
 
-        self.bottom_frame = tk.Frame(self)
+        self.bottom_frame = tk.Frame(master=self)
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.left_frame = tk.Frame(self, bg=self.cnfg["background_color"])
+        self.left_frame = tk.Frame(master=self, bg=self.cnfg["background_color"])
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.right_frame = tk.Frame(self, padx=20)
+        self.right_frame = tk.Frame(master=self, padx=20)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.right_frame.pack_propagate(False)
 
@@ -64,9 +63,9 @@ class Window(tk.Tk):
         self.create_pdf_functions_bar()
 
     def create_menubar(self):
-        menubar = tk.Menu(self.top_frame)
+        menubar = tk.Menu(master=self.top_frame)
 
-        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu = tk.Menu(master=menubar, tearoff=0)
         file_menu.add_command(label="Otwórz", command=self.load_pdf_file)
 
         menubar.add_cascade(label="Plik", menu=file_menu)
@@ -74,10 +73,13 @@ class Window(tk.Tk):
         self.config(menu=menubar)
 
     def create_pdf_menubar(self):
-        self.pdf_menubar_container = tk.Frame(self.top_frame)
+        self.pdf_menubar_container = tk.Frame(master=self.top_frame)
         self.pdf_menubar_container.pack(side=tk.TOP, fill=tk.X)
 
-        self.pdf_menubar_canvas = tk.Canvas(self.pdf_menubar_container, bd=0, highlightthickness=0, bg=self.cnfg["second_color"])
+        self.pdf_menubar_canvas = tk.Canvas(master=self.pdf_menubar_container,
+                                            bd=0,
+                                            highlightthickness=0,
+                                            bg=self.cnfg["second_color"])
         self.pdf_menubar_canvas.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.pdf_menubar_scrollbar = tk.Scrollbar(master=self.pdf_menubar_container,
@@ -85,7 +87,7 @@ class Window(tk.Tk):
                                                   command=self.pdf_menubar_canvas.xview)
         self.pdf_menubar_scrollbar.pack(side=tk.TOP, fill=tk.X, expand=True)
 
-        self.pdf_menubar_frame = tk.Frame(self.pdf_menubar_canvas, bd=1, relief=tk.SUNKEN, pady=4)
+        self.pdf_menubar_frame = tk.Frame(master=self.pdf_menubar_canvas, bd=1, relief=tk.SUNKEN, pady=4)
         self.pdf_menubar_frame.bind("<Configure>", self.update_pdf_menubar_scrollregion)
 
         self.pdf_menubar_canvas.configure(xscrollcommand=self.pdf_menubar_scrollbar.set)
@@ -94,13 +96,16 @@ class Window(tk.Tk):
         self.create_none_pdf_label()
 
     def create_pdf_info_frame(self):
-        self.pdf_info_frame = tk.Frame(self.right_frame, padx=4, pady=4)
+        self.pdf_info_frame = tk.Frame(master=self.right_frame, padx=4, pady=4)
         self.pdf_info_frame.pack(side=tk.TOP, fill=tk.BOTH)
 
-        self.pdf_info_label = tk.Label(self.pdf_info_frame, text="Właściwości")
+        self.pdf_info_label = tk.Label(master=self.pdf_info_frame, text="Właściwości")
         self.pdf_info_label.pack(side=tk.TOP, fill=tk.BOTH)
 
-        self.pdf_info_table = ttk.Treeview(self.pdf_info_frame, columns=("Właściwość", "Wartość"), show="headings", height=5)
+        self.pdf_info_table = ttk.Treeview(master=self.pdf_info_frame,
+                                           columns=("Właściwość", "Wartość"),
+                                           show="headings",
+                                           height=5)
         self.pdf_info_table.pack(side=tk.TOP, fill=tk.BOTH)
 
         self.pdf_info_table.heading("Właściwość", text="Właściwość")
@@ -112,7 +117,7 @@ class Window(tk.Tk):
         self.update_pdf_info()
 
     def create_pdf_merge_frame(self):
-        self.pdf_merge_frame = tk.Frame(self.right_frame, padx=4, pady=4)
+        self.pdf_merge_frame = tk.Frame(master=self.right_frame, padx=4, pady=4)
         self.pdf_merge_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.pdf_merge_label = tk.Label(self.pdf_merge_frame, text="Scal pliki")
@@ -126,12 +131,13 @@ class Window(tk.Tk):
                                          takefocus=True)
         self.pdf_merge_list.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.pdf_merge_button = tk.Button(self.pdf_merge_frame,
-                                          text="Połącz pliki")
+        self.pdf_merge_button = tk.Button(master=self.pdf_merge_frame,
+                                          text="Połącz pliki",
+                                          command=lambda: self.merge_pdf_files())
         self.pdf_merge_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
     def create_none_pdf_label(self):
-        self.none_pdf_frame = tk.Frame(self.pdf_menubar_frame, borderwidth=0)
+        self.none_pdf_frame = tk.Frame(master=self.pdf_menubar_frame, borderwidth=0)
         self.none_pdf_frame.pack(side=tk.LEFT, padx=4, fill=tk.BOTH, expand=True)
 
         self.none_pdf_button = tk.Button(master=self.none_pdf_frame,
@@ -144,15 +150,15 @@ class Window(tk.Tk):
             self.update_pdf_page_button()
 
     def create_pdf_canvas(self):
-        self.pdf_canvas = tk.Canvas(self.left_frame, bg=self.cnfg["background_color"])
+        self.pdf_canvas = tk.Canvas(master=self.left_frame, bg=self.cnfg["background_color"])
         self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
         self.pdf_canvas_image = None
 
     def create_pdf_functions_bar(self):
-        self.pdf_functions_frame = tk.Frame(self.bottom_frame)
+        self.pdf_functions_frame = tk.Frame(master=self.bottom_frame)
         self.pdf_functions_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.pdf_change_page_frame = tk.Frame(self.pdf_functions_frame)
+        self.pdf_change_page_frame = tk.Frame(master=self.pdf_functions_frame)
         self.pdf_change_page_frame.pack(side=tk.LEFT)
 
         self.previous_page_button = tk.Button(master=self.pdf_change_page_frame,
@@ -259,7 +265,7 @@ class Window(tk.Tk):
             self.none_pdf_frame.destroy()
         for file in self.pdf_files:
             if file.name not in self.pdf_buttons:
-                frame = tk.Frame(self.pdf_menubar_frame, borderwidth=0)
+                frame = tk.Frame(master=self.pdf_menubar_frame, borderwidth=0)
                 frame.pack(side=tk.LEFT, padx=4)
 
                 button = tk.Button(master=frame,
@@ -269,10 +275,16 @@ class Window(tk.Tk):
                                    relief=tk.FLAT)
                 button.pack(side=tk.LEFT)
 
-                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file_to_merge(file, plus_button), padx=4)
+                plus_button = tk.Button(master=frame,
+                                        text="+",
+                                        command=lambda file=file: self.add_pdf_file_to_merge(file, plus_button),
+                                        padx=4)
                 plus_button.pack(side=tk.LEFT)
 
-                close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file), padx=4)
+                close_button = tk.Button(master=frame,
+                                         text="X",
+                                         command=lambda file=file: self.remove_pdf_file(file),
+                                         padx=4)
                 close_button.pack(side=tk.LEFT)
 
                 self.pdf_buttons[file.name] = frame
@@ -293,15 +305,6 @@ class Window(tk.Tk):
             self.pdf_merge_files.append(file)
             index = self.pdf_merge_files.index(file)
             self.pdf_merge_list.insert(tk.END, f"{index}. {file.name}")
-            button.config(text="-", command=lambda file=file: self.remove_pdf_file_to_merge(file, button))
-
-    def remove_pdf_file_to_merge(self, file, button):
-        if file in self.pdf_merge_files:
-            index = self.pdf_merge_files.index(file)
-            self.pdf_merge_files.remove(file)
-            self.pdf_merge_list.delete(index)
-            self.update_pdf_merge_list()
-            button.config(text="+", command=lambda file=file: self.add_pdf_file_to_merge(file, button))
 
     def update_pdf_merge_list(self):
         self.pdf_merge_list.delete(0, tk.END)
@@ -322,6 +325,29 @@ class Window(tk.Tk):
             self.update_pdf_info()
         else:
             self.switch_pdf(self.pdf_files[0])
+
+    def merge_pdf_files(self):
+        merger = PdfWriter()
+
+        pdf_files_paths = [pdf.path for pdf in self.pdf_merge_files]
+        for pdf in pdf_files_paths:
+            merger.append(pdf)
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("Pliki PDF", "*.pdf")],
+            title="Zapisz plik PDF"
+        )
+
+        if not file_path.endswith(".pdf"):
+            file_path += ".pdf"
+
+        merger.write(file_path)
+        merger.close()
+
+        messagebox.showinfo("Informacja", "Pliki PDF zostały połączone.")
+        self.pdf_merge_files = []
+        self.pdf_merge_list.delete(0, tk.END)
 
     def on_closing(self):
         shutil.rmtree("images")
