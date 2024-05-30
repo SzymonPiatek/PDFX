@@ -10,17 +10,18 @@ from pdf import PDF
 class Window(tk.Tk):
     def __init__(self, config):
         super().__init__()
-        self.title(config["title"])
+        self.cnfg = config
+        self.title(self.cnfg["title"])
         self.screen_width = self.winfo_screenwidth()
         self.screen_height = self.winfo_screenheight()
 
-        if config["test"]:
-            self.geometry("800x800+1920+0")
+        if self.cnfg["test"]:
+            self.geometry("1200x800+1920+0")
         else:
-            if not config["fullscreen"]:
+            if not self.cnfg["fullscreen"]:
                 self.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
                 self.state("zoomed")
-            self.attributes("-fullscreen", config["fullscreen"])
+            self.attributes("-fullscreen", self.cnfg["fullscreen"])
 
         self.pdf_files = []
         self.pdf_merge_files = []
@@ -32,14 +33,7 @@ class Window(tk.Tk):
                           "selected_index": None}
 
         self.create_temp_folder()
-
         self.create_layout()
-        self.create_menubar()
-        self.create_pdf_menubar()
-        self.create_pdf_canvas()
-        self.create_pdf_info_frame()
-        self.create_pdf_merge_frame()
-        self.create_pdf_functions_bar()
 
     def create_temp_folder(self):
         if os.path.exists("images"):
@@ -47,18 +41,27 @@ class Window(tk.Tk):
         os.makedirs("images")
 
     def create_layout(self):
+        self.configure(bg=self.cnfg["background_color"])
+
         self.top_frame = tk.Frame(self)
         self.top_frame.pack(side=tk.TOP, fill=tk.X)
 
         self.bottom_frame = tk.Frame(self)
         self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.left_frame = tk.Frame(self)
+        self.left_frame = tk.Frame(self, bg=self.cnfg["background_color"])
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.right_frame = tk.Frame(self, width=350)
+        self.right_frame = tk.Frame(self, padx=20)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         self.right_frame.pack_propagate(False)
+
+        self.create_menubar()
+        self.create_pdf_menubar()
+        self.create_pdf_canvas()
+        self.create_pdf_info_frame()
+        self.create_pdf_merge_frame()
+        self.create_pdf_functions_bar()
 
     def create_menubar(self):
         menubar = tk.Menu(self.top_frame)
@@ -74,18 +77,19 @@ class Window(tk.Tk):
         self.pdf_menubar_container = tk.Frame(self.top_frame)
         self.pdf_menubar_container.pack(side=tk.TOP, fill=tk.X)
 
-        self.pdf_menubar_canvas = tk.Canvas(self.pdf_menubar_container, bd=0, highlightthickness=0)
-        self.pdf_menubar_frame = tk.Frame(self.pdf_menubar_canvas, bd=1, relief=tk.SUNKEN, pady=4)
-        self.pdf_menubar_scrollbar = tk.Scrollbar(self.pdf_menubar_container, orient=tk.HORIZONTAL,
+        self.pdf_menubar_canvas = tk.Canvas(self.pdf_menubar_container, bd=0, highlightthickness=0, bg=self.cnfg["second_color"])
+        self.pdf_menubar_canvas.pack(side=tk.TOP, fill=tk.X, expand=True)
+
+        self.pdf_menubar_scrollbar = tk.Scrollbar(master=self.pdf_menubar_container,
+                                                  orient=tk.HORIZONTAL,
                                                   command=self.pdf_menubar_canvas.xview)
+        self.pdf_menubar_scrollbar.pack(side=tk.TOP, fill=tk.X, expand=True)
+
+        self.pdf_menubar_frame = tk.Frame(self.pdf_menubar_canvas, bd=1, relief=tk.SUNKEN, pady=4)
+        self.pdf_menubar_frame.bind("<Configure>", self.update_pdf_menubar_scrollregion)
 
         self.pdf_menubar_canvas.configure(xscrollcommand=self.pdf_menubar_scrollbar.set)
         self.pdf_menubar_canvas.create_window((0, 0), window=self.pdf_menubar_frame, anchor=tk.NW)
-
-        self.pdf_menubar_frame.bind("<Configure>", self.update_pdf_menubar_scrollregion)
-
-        self.pdf_menubar_canvas.pack(side=tk.TOP, fill=tk.X, expand=True)
-        self.pdf_menubar_scrollbar.pack(side=tk.TOP, fill=tk.X, expand=True)
 
         self.create_none_pdf_label()
 
@@ -127,15 +131,20 @@ class Window(tk.Tk):
         self.pdf_merge_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
     def create_none_pdf_label(self):
-        self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
-                                       text="Brak wybranych plików")
-        self.none_pdf_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.none_pdf_frame = tk.Frame(self.pdf_menubar_frame, borderwidth=0)
+        self.none_pdf_frame.pack(side=tk.LEFT, padx=4, fill=tk.BOTH, expand=True)
+
+        self.none_pdf_button = tk.Button(master=self.none_pdf_frame,
+                                         text="Wgraj plik",
+                                         command=lambda: self.load_pdf_file(),
+                                         padx=20)
+        self.none_pdf_button.pack()
 
         if hasattr(self, "previous_page_button"):
             self.update_pdf_page_button()
 
     def create_pdf_canvas(self):
-        self.pdf_canvas = tk.Canvas(self.left_frame, background="#bdbdbd")
+        self.pdf_canvas = tk.Canvas(self.left_frame, bg=self.cnfg["background_color"])
         self.pdf_canvas.pack(fill=tk.BOTH, expand=True)
         self.pdf_canvas_image = None
 
@@ -242,24 +251,28 @@ class Window(tk.Tk):
             self.delete_pdf_canvas_image()
 
             x_offset = (canvas_width + padding - scaled_width) / 2
-            y_offset = (canvas_height + padding - scaled_height) / 2
+            y_offset = (canvas_height + padding / 2 - scaled_height) / 2
             self.image_id = self.pdf_canvas.create_image(x_offset, y_offset, anchor=tk.NW, image=self.pdf_canvas_image)
 
     def update_pdf_menubar(self):
         if self.pdf_files:
-            self.none_pdf_label.destroy()
+            self.none_pdf_frame.destroy()
         for file in self.pdf_files:
             if file.name not in self.pdf_buttons:
-                frame = tk.Frame(self.pdf_menubar_frame)
-                frame.pack(side=tk.LEFT, padx=2)
+                frame = tk.Frame(self.pdf_menubar_frame, borderwidth=0)
+                frame.pack(side=tk.LEFT, padx=4)
 
-                button = tk.Button(frame, text=file.name, command=lambda file=file: self.switch_pdf(file))
+                button = tk.Button(master=frame,
+                                   text=file.name,
+                                   command=lambda file=file: self.switch_pdf(file),
+                                   padx=20,
+                                   relief=tk.FLAT)
                 button.pack(side=tk.LEFT)
 
-                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file(file))
+                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file(file), padx=4)
                 plus_button.pack(side=tk.LEFT)
 
-                close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file))
+                close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file), padx=4)
                 close_button.pack(side=tk.LEFT)
 
                 self.pdf_buttons[file.name] = frame
