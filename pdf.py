@@ -1,13 +1,38 @@
 from PyPDF2 import PdfReader
+from pypdf import PdfWriter
 import os
 import shutil
 import sys
 import contextlib
+import tkinter
+from tkinter import filedialog
 
 
 with open(os.devnull, 'w') as devnull:
     with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
         import ironpdf
+
+
+def merge_pdf_files_return(pdf_merge_files):
+    merger = PdfWriter()
+
+    pdf_files_paths = [pdf.path for pdf in pdf_merge_files]
+    for pdf in pdf_files_paths:
+        merger.append(pdf)
+
+    file_path = filedialog.asksaveasfilename(
+        defaultextension=".pdf",
+        filetypes=[("Pliki PDF", "*.pdf")],
+        title="Zapisz plik PDF"
+    )
+
+    if not file_path.endswith(".pdf"):
+        file_path += ".pdf"
+
+    merger.write(file_path)
+    merger.close()
+
+    return True
 
 
 class PDF:

@@ -1,12 +1,10 @@
-import shutil
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
-from PyPDF2 import PdfFileMerger
-from pypdf import PdfWriter
 from configure import configuration
-from pdf import PDF
+from pdf import PDF, merge_pdf_files_return
+from functions import on_closing, create_temp_folder
 
 
 class Window(tk.Tk):
@@ -31,13 +29,8 @@ class Window(tk.Tk):
         self.current_pdf = None
         self.image_id = None
 
-        self.create_temp_folder()
+        create_temp_folder()
         self.create_layout()
-
-    def create_temp_folder(self):
-        if os.path.exists("images"):
-            shutil.rmtree("images")
-        os.makedirs("images")
 
     def create_layout(self):
         self.configure(bg=self.cnfg["background_color"])
@@ -133,7 +126,7 @@ class Window(tk.Tk):
 
         self.pdf_merge_button = tk.Button(master=self.pdf_merge_frame,
                                           text="Połącz pliki",
-                                          command=lambda: self.merge_pdf_files())
+                                          command=lambda: self.merge_pdf_files(self.pdf_merge_files))
         self.pdf_merge_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
     def create_none_pdf_label(self):
@@ -277,7 +270,7 @@ class Window(tk.Tk):
 
                 plus_button = tk.Button(master=frame,
                                         text="+",
-                                        command=lambda file=file: self.add_pdf_file_to_merge(file, plus_button),
+                                        command=lambda file=file: self.add_pdf_file_to_merge(file),
                                         padx=4)
                 plus_button.pack(side=tk.LEFT)
 
@@ -300,7 +293,7 @@ class Window(tk.Tk):
         self.update_pdf_page_button()
         self.update_pdf_info()
 
-    def add_pdf_file_to_merge(self, file, button):
+    def add_pdf_file_to_merge(self, file):
         if file not in self.pdf_merge_files:
             self.pdf_merge_files.append(file)
             index = self.pdf_merge_files.index(file)
@@ -326,35 +319,17 @@ class Window(tk.Tk):
         else:
             self.switch_pdf(self.pdf_files[0])
 
-    def merge_pdf_files(self):
-        merger = PdfWriter()
+    def merge_pdf_files(self, pdf_merge_files):
+        if pdf_merge_files:
+            result = merge_pdf_files_return(pdf_merge_files)
 
-        pdf_files_paths = [pdf.path for pdf in self.pdf_merge_files]
-        for pdf in pdf_files_paths:
-            merger.append(pdf)
-
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".pdf",
-            filetypes=[("Pliki PDF", "*.pdf")],
-            title="Zapisz plik PDF"
-        )
-
-        if not file_path.endswith(".pdf"):
-            file_path += ".pdf"
-
-        merger.write(file_path)
-        merger.close()
-
-        messagebox.showinfo("Informacja", "Pliki PDF zostały połączone.")
-        self.pdf_merge_files = []
-        self.pdf_merge_list.delete(0, tk.END)
-
-    def on_closing(self):
-        shutil.rmtree("images")
-        self.destroy()
+            if result:
+                messagebox.showinfo("Informacja", "Pliki PDF zostały połączone")
+                self.pdf_merge_files = []
+                self.pdf_merge_list.delete(0, tk.END)
 
 
 if __name__ == "__main__":
     app = Window(config=configuration)
-    app.protocol("WM_DELETE_WINDOW", app.on_closing)
+    app.protocol("WM_DELETE_WINDOW", lambda: on_closing(app))
     app.mainloop()
