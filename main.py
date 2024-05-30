@@ -15,7 +15,7 @@ class Window(tk.Tk):
         self.screen_height = self.winfo_screenheight()
 
         if config["test"]:
-            self.geometry("800x800+0+0")
+            self.geometry("800x800+1920+0")
         else:
             if not config["fullscreen"]:
                 self.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
@@ -23,9 +23,13 @@ class Window(tk.Tk):
             self.attributes("-fullscreen", config["fullscreen"])
 
         self.pdf_files = []
+        self.pdf_merge_files = []
         self.pdf_buttons = {}
         self.current_pdf = None
         self.image_id = None
+        self.drag_data = {"x": 0,
+                          "y": 0,
+                          "selected_index": None}
 
         self.create_temp_folder()
 
@@ -117,6 +121,10 @@ class Window(tk.Tk):
                                          height=10,
                                          takefocus=True)
         self.pdf_merge_list.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        self.pdf_merge_button = tk.Button(self.pdf_merge_frame,
+                                          text="Połącz pliki")
+        self.pdf_merge_button.pack(side=tk.BOTTOM, fill=tk.BOTH)
 
     def create_none_pdf_label(self):
         self.none_pdf_label = tk.Label(self.pdf_menubar_frame,
@@ -248,6 +256,9 @@ class Window(tk.Tk):
                 button = tk.Button(frame, text=file.name, command=lambda file=file: self.switch_pdf(file))
                 button.pack(side=tk.LEFT)
 
+                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file(file))
+                plus_button.pack(side=tk.LEFT)
+
                 close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file))
                 close_button.pack(side=tk.LEFT)
 
@@ -263,6 +274,11 @@ class Window(tk.Tk):
         self.display_pdf()
         self.update_pdf_page_button()
         self.update_pdf_info()
+
+    def add_pdf_file(self, file):
+        self.pdf_merge_files.append(file)
+        index = self.pdf_merge_files.index(file)
+        self.pdf_merge_list.insert(tk.END, f"{index}. {file.name}")
 
     def remove_pdf_file(self, file):
         file.remove_files()
