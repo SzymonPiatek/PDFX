@@ -269,7 +269,7 @@ class Window(tk.Tk):
                                    relief=tk.FLAT)
                 button.pack(side=tk.LEFT)
 
-                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file(file), padx=4)
+                plus_button = tk.Button(frame, text="+", command=lambda file=file: self.add_pdf_file_to_merge(file, plus_button), padx=4)
                 plus_button.pack(side=tk.LEFT)
 
                 close_button = tk.Button(frame, text="X", command=lambda file=file: self.remove_pdf_file(file), padx=4)
@@ -288,10 +288,25 @@ class Window(tk.Tk):
         self.update_pdf_page_button()
         self.update_pdf_info()
 
-    def add_pdf_file(self, file):
-        self.pdf_merge_files.append(file)
-        index = self.pdf_merge_files.index(file)
-        self.pdf_merge_list.insert(tk.END, f"{index}. {file.name}")
+    def add_pdf_file_to_merge(self, file, button):
+        if file not in self.pdf_merge_files:
+            self.pdf_merge_files.append(file)
+            index = self.pdf_merge_files.index(file)
+            self.pdf_merge_list.insert(tk.END, f"{index}. {file.name}")
+            button.config(text="-", command=lambda file=file: self.remove_pdf_file_to_merge(file, button))
+
+    def remove_pdf_file_to_merge(self, file, button):
+        if file in self.pdf_merge_files:
+            index = self.pdf_merge_files.index(file)
+            self.pdf_merge_files.remove(file)
+            self.pdf_merge_list.delete(index)
+            self.update_pdf_merge_list()
+            button.config(text="+", command=lambda file=file: self.add_pdf_file_to_merge(file, button))
+
+    def update_pdf_merge_list(self):
+        self.pdf_merge_list.delete(0, tk.END)
+        for index, file in enumerate(self.pdf_merge_files):
+            self.pdf_merge_list.insert(tk.END, f"{index}. {file.name}")
 
     def remove_pdf_file(self, file):
         file.remove_files()
